@@ -41,6 +41,14 @@ const login = async (request) => {
   return { token, user, refreshToken}
 };
 
+
+const logout = async (request) => {
+  /* add logout transactions */
+  await UserHelper.setLogoutDate(request);
+}
+
+
 module.exports = {
   login,
+  logout
 };
