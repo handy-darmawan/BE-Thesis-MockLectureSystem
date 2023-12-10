@@ -22,6 +22,25 @@ const login = async (request, response, next) => {
   }
 };
 
+
+const logout = async (request, response, next) => {
+  try {
+    /* add logout date */
+    await userService.logout(request);
+
+    /* delete cookies */
+    response.clearCookie("refreshToken");
+
+    response.status(200).json({
+      message: "Logout success",
+    });
+
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   login,
+  logout
 };

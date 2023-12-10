@@ -40,6 +40,22 @@ class UserHelper {
 
     return getTransactionID[0].transaction_id;
   }
+
+  async setLogoutDate(request) {
+    const { transaction_id, user_id } = request.user;
+    const date = new Date();
+
+    await db("tr_login_transaction")
+      .where({
+          transaction_id: transaction_id,
+          user_id: user_id
+        })
+      .update({
+        transaction_user_logout_date: date,
+        update_user: "system",
+        update_date: date,
+      });
+  }
 }
 
 module.exports = UserHelper.shared;
