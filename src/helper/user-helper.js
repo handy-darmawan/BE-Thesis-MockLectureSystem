@@ -56,6 +56,16 @@ class UserHelper {
         update_date: date,
       });
   }
+
+  decodeToken(refreshToken, refreshTokenKey) {
+    const decoded = jwt.decode(refreshToken, refreshTokenKey)
+
+    delete decoded.iat
+    delete decoded.exp
+
+    return decoded
+  }
+
 }
 
 module.exports = UserHelper.shared;

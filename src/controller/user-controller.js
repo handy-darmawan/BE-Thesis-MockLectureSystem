@@ -13,10 +13,26 @@ const login = async (request, response, next) => {
 
     response.status(200).json({
       token: {
-        access_token: result.token
+        access_token: result.token,
       },
       data: result.user,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+const getToken = async (request, response, next) => {
+  try {
+    const token = await userService.getToken(request);
+
+    response.status(200).json({
+      token: {
+        access_token: token
+      },
+    }); 
+
   } catch (error) {
     next(error);
   }
@@ -34,13 +50,13 @@ const logout = async (request, response, next) => {
     response.status(200).json({
       message: "Logout success",
     });
-
   } catch (error) {
     next(error);
   }
-}
+};
 
 module.exports = {
   login,
-  logout
+  getToken,
+  logout,
 };
