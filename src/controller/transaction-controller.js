@@ -11,6 +11,18 @@ const getShifts = async (request, response, next) => {
     }
 }
 
+const getTransactions = async (request, response, next) => {
+    try {
+        const transactions = await transactionService.getTransactions(request)
+        response.status(200).json({
+            data: transactions
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     getShifts,
+    getTransactions
 }
