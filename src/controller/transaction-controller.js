@@ -57,28 +57,56 @@ const exportExcel = async (request, response, next) => {
     const transactions = await transactionService.getTransactions(request);
 
     if (transactions.length == 0) {
-        response.status(204).end()
-      } else {
-        transactions.forEach((transaction) => {
-          sheet.addRow(transaction);
-        });
-  
-        response.setHeader(
-          "Content-Type",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
-  
-        response.setHeader(
-          "Content-Disposition",
-          "attachment; filename=" + "reports.xlsx"
-        );
-  
-        await workbook.xlsx.write(response);
-  
-        response.end();
-      }
+      response.status(204).end();
+    } else {
+      transactions.forEach((transaction) => {
+        sheet.addRow(transaction);
+      });
+
+      response.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+
+      response.setHeader(
+        "Content-Disposition",
+        "attachment; filename=" + "reports.xlsx"
+      );
+
+      await workbook.xlsx.write(response);
+
+      response.end();
+    }
   } catch (error) {
-    next(error)
+    next(error);
+  }
+};
+
+const searchTransaction = async (request, response, next) => {
+  try {
+    const transactions = await transactionService.searchTransaction(request.body);
+    
+    if (transactions.length === 0) {
+      response.status(204).end();
+    }
+    else {
+      response.status(200).json({
+        data: transactions,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateLectureStatus = async (request, response, next) => {
+  try {
+    await transactionService.updateLectureStatus(request.params);
+    response.status(200).json({
+      message: "Lecture status updated",
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -87,4 +115,6 @@ module.exports = {
   getTransactions,
   exportCSV,
   exportExcel,
+  searchTransaction,
+  updateLectureStatus,
 };

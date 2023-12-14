@@ -25,38 +25,92 @@ const getTransactions = async (request) => {
   for (let x = 0; x <= getDayCount; x++) {
     const date = new Date(start_date);
     date.setDate(date.getDate() + x);
-    
-    let transactions = await db("tr_transaction").whereRaw(
-      "TO_CHAR(transaction_date, 'YYYY-MM-DD') = ?",
-      TransactionHelper.formatDate(date)
+
+    let transactions = await db.raw(
+      TransactionHelper.rawQueryAllTransactions +
+        " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') = ?",
+      [TransactionHelper.formatDate(date)]
     );
-    
+
     /* if no data, generate dummy data */
-    if (transactions.length === 0) {
+    if (transactions.rows.length === 0) {
       /* 1. generate dummy data */
-      const transaction = TransactionHelper.generateTransactions()
-      
+      const transaction = TransactionHelper.generateTransactions();
+
       /* 2. insert lecturer data to db */
-      for(let x=0; x<transaction.length; x++) {
-        await insertLecturerData(transaction[x].lecturerID, transaction[x].lecturerName)
-        await insertCourseData(transaction[x].courseID, transaction[x].courseDescription)
-        await insertTransactionData(transaction[x], date)
+      for (let x = 0; x < transaction.length; x++) {
+        await insertLecturerData(
+          transaction.lecturerID,
+          transaction.lecturerName
+        );
+        await insertCourseData(
+          transaction.courseID,
+          transaction.courseDescription
+        );
+        await insertTransactionData(transaction, date);
       }
 
       /* 3. fetch inserted data */
-      transactions = await db("tr_transaction").whereRaw(
-        "TO_CHAR(transaction_date, 'YYYY-MM-DD') = ?",
-        TransactionHelper.formatDate(date)
+      transactions = await db.raw(
+        TransactionHelper.rawQueryAllTransactions +
+          " where TO_CHAR(transaction_date, 'YYYY-MM-DD') = ?",
+        [TransactionHelper.formatDate(date)]
       );
     }
 
-    listOfTransactions = [...listOfTransactions, ...transactions];
+    listOfTransactions = [...listOfTransactions, ...transactions.rows];
   }
 
   /* return list of transactions */
   return listOfTransactions;
 };
 
+const searchTransaction = async (request) => {
+  const date = request.date;
+  const shiftID = await getShiftID(request.shift);
+  const courseID = request.course_id;
+  const lecturerName = request.lecturer_name;
+  const classID = request.class_id;
+
+  let rawQuery =
+    TransactionHelper.rawQueryAllTransactions +
+    " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') = ? and mss.shift_id = ? and msc.course_id = ? and msl.lecturer_name = ? and tr.class_id = ?";
+  const transaction = await db.raw(rawQuery, [
+    date,
+    shiftID,
+    courseID,
+    lecturerName,
+    classID,
+  ]);
+
+  return transaction.rows;
+};
+
+const updateLectureStatus = async (request) => {
+  const transactionID = request.transactionID;
+
+  await db("tr_transaction").where({ transaction_id: transactionID }).update({
+    status_id: 2, /* set to present */
+    transaction_update_date: new Date(),
+    update_user: "BOT",
+    update_date: new Date(),
+  });
+
+}
+
+/* --- functionality --- */
+
+async function getShiftID(shift) {
+  const [shiftStart, shiftEnd] = TransactionHelper.getShift(shift);
+  const shiftID = await db("ms_shift")
+    .where({
+      shift_start_time: shiftStart,
+      shift_end_time: shiftEnd,
+    })
+    .select("shift_id");
+
+  return shiftID[0].shift_id;
+}
 
 async function insertLecturerData(lecturerID, lecturerName) {
   await db("ms_lecturer")
@@ -68,9 +122,9 @@ async function insertLecturerData(lecturerID, lecturerName) {
     })
     .onConflict("lecturer_id")
     .ignore();
-};
+}
 
-async function insertCourseData (courseID, courseDescription) {
+async function insertCourseData(courseID, courseDescription) {
   await db("ms_course")
     .insert({
       course_id: courseID,
@@ -80,7 +134,7 @@ async function insertCourseData (courseID, courseDescription) {
     })
     .onConflict("course_id")
     .ignore();
-};
+}
 
 async function insertTransactionData(transaction, date) {
   await db("tr_transaction")
@@ -99,9 +153,9 @@ async function insertTransactionData(transaction, date) {
     .ignore();
 }
 
-
-
 module.exports = {
   getShifts,
   getTransactions,
+  searchTransaction,
+  updateLectureStatus
 };
