@@ -13,6 +13,8 @@ publicRouter.delete("/api/user/logout", userController.logout);
 /* Transactions API */
 publicRouter.get("/api/transactions/shifts", transactionController.getShifts)
 publicRouter.get("/api/transactions", transactionController.getTransactions)
+publicRouter.post("/api/transactions/export/csv", transactionController.exportCSV)
+publicRouter.post("/api/transactions/export/excel", transactionController.exportExcel)
 
 module.exports = {
   publicRouter,
