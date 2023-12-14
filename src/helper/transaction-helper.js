@@ -1,6 +1,8 @@
 class TransactionHelper {
   static shared = new TransactionHelper();
 
+  rawQueryAllTransactions = "select tr.transaction_id, tr.lecturer_id, msl.lecturer_name, msc.course_id, msc.course_description, tr.class_id, TO_CHAR(mss.shift_start_time, 'HH24:MI') as shift_start_time , TO_CHAR(mss.shift_end_time , 'HH24:MI') as shift_end_time, msst.status_description , tr.transaction_date , tr.transaction_link from tr_transaction tr inner join ms_lecturer msl on tr.lecturer_id = msl.lecturer_id inner join ms_shift mss on tr.shift_id = mss.shift_id inner join ms_status msst on tr.status_id = msst.status_id inner join ms_course msc on tr.course_id = msc.course_id";
+
   listOfCourse = [
     ["ABCD5678", "Algorithm and Programming"],
     ["EFGH1234", "Fundamental In Game Balancing"],
@@ -308,6 +310,11 @@ class TransactionHelper {
       }
     }
     return listsOfTransactions;
+  }
+
+  getShift(shift) {
+    const [shiftStart, shiftEnd] = shift.split(" - ");
+    return [shiftStart+":00", shiftEnd+":00"]
   }
 }
 
