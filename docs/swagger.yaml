@@ -1,0 +1,410 @@
+openapi: 3.1.0
+info:
+  title: Website Lecture System API Documentation 
+  version: 1.0.0
+components:
+  securitySchemes:
+    token:
+      type: apiKey
+      in: header
+      name: Authorization
+contact:
+  name: Handy Darmawan
+  email: mail.handy.darmawan@gmail.com
+servers:
+  - url: https://ganti-dulu.com
+    description: Development server
+  - url: http://localhost:3000
+    description: Local server 
+tags:
+  - name: User API
+    description: User API
+  - name: Transaction API
+    description: Transaction API
+  - name: Export API
+    description: Export API
+paths:
+# User API
+  /api/user/login:
+    post:
+      tags: [User API]
+      summary: Login to the website
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: staf
+                password:
+                  type: string
+                  example: staf1234
+      responses:
+        200:
+          description: Login success
+          content:
+            application/json:
+              example:
+                token:
+                  access_token: token
+                data:
+                  user_id: 1
+                  username: staf
+                  role: STAF
+        401:
+          description: Failed login
+          content:
+            application/json:
+              example:
+                error: Username or password wrong
+  /api/user/token:
+    get: 
+      tags: [User API]
+      summary: Generate new token
+      responses:
+        200:
+          description: New token generated
+          content:
+            application/json:
+              example:
+                token:
+                  access_token: token
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+  /api/user/change-password:
+    patch:
+      tags: [User API]
+      summary: Change password
+      security:
+        - token: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: true
+              properties:
+                old_password:
+                  type: string
+                  example: oldpassword
+                new_password:
+                  type: string
+                  example: newpassword
+                validate_new_password:
+                  type: string
+                  example: newpassword
+      responses:
+        200:
+          description: Password changed
+          content:
+            application/json:   
+              example:
+                data: Success change password
+        422:
+          description: Wrong Password
+          content:
+            application/json:
+              example:
+                error: Password doesn't match
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+  /api/user/logout:
+    delete: 
+      tags: [User API]
+      summary: Logout from website
+      security:
+        - token: []
+      responses:
+        200:
+          description: Logout success
+          content:
+            application/json:
+              example:
+                data: Logout Success
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+
+
+# Transaction API
+  /api/transactions:
+    get:
+      tags: [Transaction API]
+      summary: Retrieve transactions
+      description: Retrieve a list of transactions with current shift
+      security:
+        - token: []
+      parameters:
+        - name: name
+          description: default is empty
+          in: query
+          schema:
+            type: string
+        - name: page
+          description: default is 1
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          description: default is 10
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successful retrieve
+          content:
+            application/json:
+              example:
+                data:
+                  - transaction_id: 1
+                    lecturer_id: C0001
+                    lecturer_name: Lecturer
+                    course_id: CR001
+                    course_description: Course description
+                    class_id: CL001
+                    shift_start_time: 09:20
+                    shift_end_time: 10:50
+                    status_description: Did not start yet
+                    transaction_date: 2023-11-05T04:06:20.887Z
+                    transaction_link: https://dummy.zoom.us/j/96675983197?pwd=aVlWaWh1UUhucE0wQTJVSTMreG0zZz09
+                  - transaction_id: 2
+                    lecturer_id: C0001
+                    lecturer_name: Lecturer
+                    course_id: CR001
+                    course_description: Course description
+                    class_id: CL001
+                    shift_start_time: 09:20
+                    shift_end_time: 10:50
+                    status_description: Present
+                    transaction_date: 2023-11-05T04:06:20.887Z
+                    transaction_link: https://dummy.zoom.us/j/96675983197?pwd=aVlWaWh1UUhucE0wQTJVSTMreG0zZz09
+                  - ...
+                paging:
+                  page: 1
+                  limit: 10
+                  total_page: 370
+                  total_item: 3696
+        204:
+          description: No Content
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+    post:
+      tags: [Transaction API]
+      summary: Add a bulk transactions with CSV file type
+      description: Adding transactions with CSV file type
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+        - token: []
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              example:
+                data: Transactions saved
+        415:
+          description: File type is not CSV
+          content:
+            application/json:
+              example:
+                error: File type is not CSV
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+    patch: 
+      tags: [Transaction API]
+      summary: Update transactions
+      description: This is to simulate the Zoom API to update the transaction status
+      security:
+        - token: []
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              example:
+                data: Updated
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+
+
+# Export API
+  /api/transactions/export/csv:
+    post:
+      tags: [Export API]
+      summary: Export transactions report as CSV file
+      description: Export transactions to CSV
+      produces: 
+        - text/csv
+      security:
+        - token: []
+      requestBody:
+        description: start_date and end_date is required
+        content:
+            schema:
+              type: object
+              properties:
+                lecturer_name:
+                  type: string
+                  example: name
+                start_date:
+                  type: string
+                  format: string
+                  example: "2023-06-21"
+                end_date:
+                  type: string
+                  format: string
+                  example: "2023-06-22"
+                shift:
+                  type: string
+                  example: 07:20 - 09:20
+              required:
+                - start_date
+                - end_date    
+      responses:
+        200:
+          description: Downloaded file
+          schema:
+            type: file
+        204:
+          description: No Content
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+  /api/transactions/export/excel:
+    post:
+      tags: [Export API]
+      summary: Export transactions report as Excel file
+      description: Export transactions to Excel
+      produces:
+        - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      security:
+        - token: []
+      requestBody:
+        description: start_date and end_date is required
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lecturer_name:
+                  type: string
+                  example: name
+                start_date:
+                  type: string
+                  format: string
+                  example: "2023-06-21"
+                end_date:
+                  type: string
+                  format: string
+                  example: "2023-06-22"
+                shift:
+                  type: string
+                  example: 07:20 - 09:20
+              required:
+                - start_date
+                - end_date    
+      responses:
+        200:
+          description: Downloaded file
+          schema:
+            type: file
+        204:
+          description: No Content
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+  /api/lists/shift:
+    get:
+      tags: [Export API]
+      summary: Get lists of shift
+      description: Retrieve a list of shifts
+      security:
+        - token: []
+      responses:
+        200:
+          description: 
+          content:
+            application/json:
+              example:
+                data:
+                  - 07:20 - 09:20
+                  - 09:20 - 11:20
+                  - ...
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+  /api/lists/lecturer:
+    get:
+      tags: [Export API]
+      summary: Get lists of lecturer
+      description: Retrieve a list of lecturers by user input
+      security:
+        - token: []
+      parameters:
+        - name: lecturer_name
+          in: query
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              example:
+                data:
+                  - Lecturer 1
+                  - Lecturer 2
+        204:
+          description: No Content
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
