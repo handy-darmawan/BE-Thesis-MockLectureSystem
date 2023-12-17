@@ -40,7 +40,6 @@ const getTransactions = async (request) => {
     bindings
   );
 
-  /* return list of transactions */
   return { listsOfTransactions, page, limit, totalPage, totalRow };
 };
 
@@ -76,6 +75,19 @@ const updateLectureStatus = async (request) => {
   });
 };
 
+const exportTransactions = async (request) => {
+  const startDate = request.body.start_date;
+  const endDate = request.body.end_date;
+
+  const results = await db.raw(
+    TransactionHelper.rawQueryAllTransactions +
+      " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') between ? and ?",
+    [startDate, endDate]
+  );
+
+  return results.rows
+};
+
 /* --- functionality --- */
 
 async function getShiftID(shift) {
@@ -89,7 +101,6 @@ async function getShiftID(shift) {
 
   return shiftID[0].shift_id;
 }
-
 
 async function insertAllData(transactionsCount) {
   /* if no data, generate dummy data */
@@ -184,4 +195,5 @@ module.exports = {
   getTransactions,
   searchTransaction,
   updateLectureStatus,
+  exportTransactions
 };

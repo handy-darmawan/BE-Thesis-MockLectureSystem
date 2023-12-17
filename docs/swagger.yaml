@@ -12,8 +12,6 @@ contact:
   name: Handy Darmawan
   email: mail.handy.darmawan@gmail.com
 servers:
-  - url: https://ganti-dulu.com
-    description: Development server
   - url: http://localhost:3000
     description: Local server 
 tags:
@@ -78,48 +76,6 @@ paths:
             application/json:
               example:
                 error: Unauthorized
-  /api/user/change-password:
-    patch:
-      tags: [User API]
-      summary: Change password
-      security:
-        - token: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: true
-              properties:
-                old_password:
-                  type: string
-                  example: oldpassword
-                new_password:
-                  type: string
-                  example: newpassword
-                validate_new_password:
-                  type: string
-                  example: newpassword
-      responses:
-        200:
-          description: Password changed
-          content:
-            application/json:   
-              example:
-                data: Success change password
-        422:
-          description: Wrong Password
-          content:
-            application/json:
-              example:
-                error: Password doesn't match
-        401:
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                error: Unauthorized
   /api/user/logout:
     delete: 
       tags: [User API]
@@ -142,7 +98,7 @@ paths:
 
 
 # Transaction API
-  /api/transactions:
+  /api/transactions/:
     get:
       tags: [Transaction API]
       summary: Retrieve transactions
@@ -150,11 +106,20 @@ paths:
       security:
         - token: []
       parameters:
-        - name: name
-          description: default is empty
+        - name: start_date
+          required: true
           in: query
           schema:
             type: string
+            format: string
+            example: "2023-06-21"
+        - name: end_date
+          required: true
+          in: query
+          schema:
+            type: string
+            format: string
+            example: "2023-06-22"
         - name: page
           description: default is 1
           in: query
@@ -200,6 +165,86 @@ paths:
                   limit: 10
                   total_page: 370
                   total_item: 3696
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+  /api/transactions/{transaction_id}:
+   patch: 
+      tags: [Transaction API]
+      summary: Update transactions
+      description: This is to simulate the Zoom API to update the transaction status
+      security:
+        - token: []
+      parameters:
+        - name: transaction_id
+          required: true
+          in: param
+          schema:
+            type: integer
+            format: integer
+            example: 1
+      responses:
+        200:
+          description: Lecture status updated
+          content:
+            application/json:
+              example:
+                data: Lecture status updated
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+  /api/transactions/search:
+    post:
+      tags: [Transaction API]
+      summary: Search for specific transactions by lecturer_name, date, shift, course_id, class_id
+      security:
+        - token: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  example: '2023-12-30'
+                shift:
+                  type: string
+                  example: '07:20 - 09:20'
+                course_id:
+                  type: string
+                  example: 'ABCD5678' 
+                class_id:
+                  type: string
+                  example: 'VBG-36'
+                lecturer_name:
+                  type: string
+                  example: 'Prof. Miller Taylor'
+      responses:
+        200:
+          description: 
+          content:
+            application/json:
+              example:
+                data:
+                  - transaction_id: 1
+                    lecturer_id: C0001
+                    lecturer_name: Lecturer
+                    course_id: CR001
+                    course_description: Course description
+                    class_id: CL001
+                    shift_start_time: 09:20
+                    shift_end_time: 10:50
+                    status_description: Did not start yet
+                    transaction_date: 2023-11-05T04:06:20.887Z
+                    transaction_link: https://dummy.zoom.us/j/96675983197?pwd=aVlWaWh1UUhucE0wQTJVSTMreG0zZz09
         204:
           description: No Content
         401:
@@ -208,53 +253,23 @@ paths:
             application/json:
               example:
                 error: Unauthorized
-    post:
+  /api/transactions/shift:
+    get:
       tags: [Transaction API]
-      summary: Add a bulk transactions with CSV file type
-      description: Adding transactions with CSV file type
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      security:
-        - token: []
-      responses:
-        201:
-          description: Created
-          content:
-            application/json:
-              example:
-                data: Transactions saved
-        415:
-          description: File type is not CSV
-          content:
-            application/json:
-              example:
-                error: File type is not CSV
-        401:
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                error: Unauthorized
-    patch: 
-      tags: [Transaction API]
-      summary: Update transactions
-      description: This is to simulate the Zoom API to update the transaction status
+      summary: Get lists of shift
+      description: Retrieve a list of shifts
       security:
         - token: []
       responses:
         200:
-          description: Updated
+          description: 
           content:
             application/json:
               example:
-                data: Updated
+                data:
+                  - 07:20 - 09:20
+                  - 09:20 - 11:20
+                  - ...
         401:
           description: Unauthorized
           content:
@@ -274,14 +289,12 @@ paths:
       security:
         - token: []
       requestBody:
-        description: start_date and end_date is required
+        required: true
         content:
+          application/json:
             schema:
               type: object
               properties:
-                lecturer_name:
-                  type: string
-                  example: name
                 start_date:
                   type: string
                   format: string
@@ -290,12 +303,6 @@ paths:
                   type: string
                   format: string
                   example: "2023-06-22"
-                shift:
-                  type: string
-                  example: 07:20 - 09:20
-              required:
-                - start_date
-                - end_date    
       responses:
         200:
           description: Downloaded file
@@ -319,15 +326,12 @@ paths:
       security:
         - token: []
       requestBody:
-        description: start_date and end_date is required
+        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                lecturer_name:
-                  type: string
-                  example: name
                 start_date:
                   type: string
                   format: string
@@ -336,70 +340,11 @@ paths:
                   type: string
                   format: string
                   example: "2023-06-22"
-                shift:
-                  type: string
-                  example: 07:20 - 09:20
-              required:
-                - start_date
-                - end_date    
       responses:
         200:
           description: Downloaded file
           schema:
             type: file
-        204:
-          description: No Content
-        401:
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                error: Unauthorized
-  /api/lists/shift:
-    get:
-      tags: [Export API]
-      summary: Get lists of shift
-      description: Retrieve a list of shifts
-      security:
-        - token: []
-      responses:
-        200:
-          description: 
-          content:
-            application/json:
-              example:
-                data:
-                  - 07:20 - 09:20
-                  - 09:20 - 11:20
-                  - ...
-        401:
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                error: Unauthorized
-  /api/lists/lecturer:
-    get:
-      tags: [Export API]
-      summary: Get lists of lecturer
-      description: Retrieve a list of lecturers by user input
-      security:
-        - token: []
-      parameters:
-        - name: lecturer_name
-          in: query
-          schema:
-            type: string
-          required: true
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              example:
-                data:
-                  - Lecturer 1
-                  - Lecturer 2
         204:
           description: No Content
         401:
