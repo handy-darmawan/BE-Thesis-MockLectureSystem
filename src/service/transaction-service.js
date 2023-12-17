@@ -17,52 +17,31 @@ const getShifts = async () => {
 };
 
 const getTransactions = async (request) => {
-  const { start_date, end_date } = request.body;
-  const getDayCount = TransactionHelper.getDayCount(start_date, end_date);
-  let listOfTransactions = [];
+  const page = parseInt(request.query.page) || 1;
+  const limit = parseInt(request.query.limit) || 10;
+  const offset = (page - 1) * limit;
+  const { start_date, end_date } = request.query;
+  let [bindings, placeholders] = await getTransacHelper(start_date, end_date);
 
-  /* check database for this range days */
-  for (let x = 0; x <= getDayCount; x++) {
-    const date = new Date(start_date);
-    date.setDate(date.getDate() + x);
+  const rowResults = await db.raw(
+    TransactionHelper.rawQueryAllTransactions +
+      ` where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') in (${placeholders})`,
+    bindings
+  );
 
-    let transactions = await db.raw(
-      TransactionHelper.rawQueryAllTransactions +
-        " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') = ?",
-      [TransactionHelper.formatDate(date)]
-    );
+  const totalRow = rowResults.rows.length;
+  const totalPage = Math.ceil(totalRow / limit);
 
-    /* if no data, generate dummy data */
-    if (transactions.rows.length === 0) {
-      /* 1. generate dummy data */
-      const transaction = TransactionHelper.generateTransactions();
-
-      /* 2. insert lecturer data to db */
-      for (let x = 0; x < transaction.length; x++) {
-        await insertLecturerData(
-          transaction.lecturerID,
-          transaction.lecturerName
-        );
-        await insertCourseData(
-          transaction.courseID,
-          transaction.courseDescription
-        );
-        await insertTransactionData(transaction, date);
-      }
-
-      /* 3. fetch inserted data */
-      transactions = await db.raw(
-        TransactionHelper.rawQueryAllTransactions +
-          " where TO_CHAR(transaction_date, 'YYYY-MM-DD') = ?",
-        [TransactionHelper.formatDate(date)]
-      );
-    }
-
-    listOfTransactions = [...listOfTransactions, ...transactions.rows];
-  }
+  /* fetch all data from db */
+  bindings.push(limit, offset);
+  const listsOfTransactions = await db.raw(
+    TransactionHelper.rawQueryAllTransactions +
+      ` where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') in (${placeholders}) order by tr.transaction_date asc limit ? offset ?`,
+    bindings
+  );
 
   /* return list of transactions */
-  return listOfTransactions;
+  return { listsOfTransactions, page, limit, totalPage, totalRow };
 };
 
 const searchTransaction = async (request) => {
@@ -90,13 +69,12 @@ const updateLectureStatus = async (request) => {
   const transactionID = request.transactionID;
 
   await db("tr_transaction").where({ transaction_id: transactionID }).update({
-    status_id: 2, /* set to present */
+    status_id: 2 /* set to present */,
     transaction_update_date: new Date(),
     update_user: "BOT",
     update_date: new Date(),
   });
-
-}
+};
 
 /* --- functionality --- */
 
@@ -110,6 +88,54 @@ async function getShiftID(shift) {
     .select("shift_id");
 
   return shiftID[0].shift_id;
+}
+
+
+async function insertAllData(transactionsCount) {
+  /* if no data, generate dummy data */
+  if (transactionsCount === 0) {
+    /* 1. generate dummy data */
+    const transaction = TransactionHelper.generateTransactions();
+    /* 2. insert lecturer data to db */
+    for (let x = 0; x < transaction.length; x++) {
+      await insertLecturerData(
+        transaction[x].lecturerID,
+        transaction[x].lecturerName
+      );
+      await insertCourseData(
+        transaction[x].courseID,
+        transaction[x].courseDescription
+      );
+      await insertTransactionData(transaction[x], date);
+    }
+  }
+}
+
+async function getTransacHelper(startDate, endDate) {
+  var bindings = [];
+  var placeholders = [];
+  const getDayCount = TransactionHelper.getDayCount(startDate, endDate);
+
+  /* check database for this range days and generate the data */
+  for (let x = 0; x <= getDayCount; x++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + x);
+
+    const formattedDate = TransactionHelper.formatDate(date);
+    bindings.push(formattedDate);
+
+    placeholders.push("?");
+
+    let transactions = await db.raw(
+      TransactionHelper.rawQueryAllTransactions +
+        " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') = ?",
+      [formattedDate]
+    );
+
+    await insertAllData(transactions.rows.length);
+  }
+
+  return [bindings, placeholders];
 }
 
 async function insertLecturerData(lecturerID, lecturerName) {
@@ -157,5 +183,5 @@ module.exports = {
   getShifts,
   getTransactions,
   searchTransaction,
-  updateLectureStatus
+  updateLectureStatus,
 };
