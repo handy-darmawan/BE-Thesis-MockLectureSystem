@@ -17,6 +17,7 @@ class ExportHelper {
       { header: "Meeting Time Start", key: "shift_start_time", width: 10 },
       { header: "Meeting Time End", key: "shift_end_time", width: 10 },
       { header: "Transaction Date", key: "transaction_date", width: 10 },
+      { header: "Transaction Link", key: "transaction_link", width: 10 },
       { header: "Status Description", key: "status_description", width: 10 },
     ];
 
