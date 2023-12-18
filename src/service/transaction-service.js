@@ -36,7 +36,7 @@ const getTransactions = async (request) => {
   bindings.push(limit, offset);
   const listsOfTransactions = await db.raw(
     TransactionHelper.rawQueryAllTransactions +
-      ` where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') in (${placeholders}) order by tr.transaction_date asc limit ? offset ?`,
+      ` where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') in (${placeholders}) order by tr.transaction_id asc limit ? offset ?`,
     bindings
   );
 
@@ -84,7 +84,6 @@ const exportTransactions = async (request) => {
       " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') between ? and ?",
     [startDate, endDate]
   );
-
   return results.rows
 };
 
@@ -102,7 +101,7 @@ async function getShiftID(shift) {
   return shiftID[0].shift_id;
 }
 
-async function insertAllData(transactionsCount) {
+async function insertAllData(transactionsCount, date) {
   /* if no data, generate dummy data */
   if (transactionsCount === 0) {
     /* 1. generate dummy data */
@@ -143,7 +142,7 @@ async function getTransacHelper(startDate, endDate) {
       [formattedDate]
     );
 
-    await insertAllData(transactions.rows.length);
+    await insertAllData(transactions.rows.length, date);
   }
 
   return [bindings, placeholders];

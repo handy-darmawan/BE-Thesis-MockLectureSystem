@@ -14,7 +14,7 @@ const getShifts = async (request, response, next) => {
 
 const getTransactions = async (request, response, next) => {
   try {
-    const results = await transactionService.exportTransactions(request);
+    const results = await transactionService.getTransactions(request);
     response.status(200).json({
       data: results.listsOfTransactions.rows,
       paging: {
@@ -39,14 +39,13 @@ const exportCSV = async (request, response, next) => {
       transactions.forEach((transaction) => {
         sheet.addRow(transaction);
       });
-      
+
       /* change numbering in transactionID */
       for (let x = 1; x <= transactions.length; x++) {
         sheet.getRow(x+1).getCell(1).value = x
       }
 
       response.setHeader("Content-Type", "text/csv");
-
       response.setHeader(
         "Content-Disposition",
         "attachment; filename=" + "reports.csv"
@@ -64,8 +63,7 @@ const exportCSV = async (request, response, next) => {
 const exportExcel = async (request, response, next) => {
   try {
     const [workbook, sheet] = ExportHelper.generateSheet();
-    const transactions = await transactionService.getTransactions(request);
-
+    const transactions = await transactionService.exportTransactions(request);
     if (transactions.length == 0) {
       response.status(204).end();
     } else {
@@ -82,7 +80,6 @@ const exportExcel = async (request, response, next) => {
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       );
-
       response.setHeader(
         "Content-Disposition",
         "attachment; filename=" + "reports.xlsx"
