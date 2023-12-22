@@ -165,12 +165,18 @@ paths:
                   limit: 10
                   total_page: 370
                   total_item: 3696
+        400:
+          description: All field can't be empty
+          content:
+            application/json:
+              example:
+                error: All field can't be empty
         401:
           description: Unauthorized
           content:
             application/json:
               example:
-                error: Unauthorized
+                error: Unauthorized   
   /api/transactions/{transaction_id}:
    patch: 
       tags: [Transaction API]
@@ -193,6 +199,12 @@ paths:
             application/json:
               example:
                 data: Lecture status updated
+        400:
+          description: Choose transaction to update
+          content:
+            application/json:
+              example:
+                error: Choose transaction to update
         401:
           description: Unauthorized
           content:
@@ -247,6 +259,12 @@ paths:
                     transaction_link: https://dummy.zoom.us/j/96675983197?pwd=aVlWaWh1UUhucE0wQTJVSTMreG0zZz09
         204:
           description: No Content
+        400:
+          description: All field can't be empty
+          content:
+            application/json:
+              example:
+                error: All field can't be empty
         401:
           description: Unauthorized
           content:
@@ -310,6 +328,12 @@ paths:
             type: file
         204:
           description: No Content
+        400:
+          description: All field can't be empty
+          content:
+            application/json:
+              example:
+                error: All field can't be empty
         401:
           description: Unauthorized
           content:
@@ -347,6 +371,12 @@ paths:
             type: file
         204:
           description: No Content
+        400:
+          description: All field can't be empty
+          content:
+            application/json:
+              example:
+                error: All field can't be empty
         401:
           description: Unauthorized
           content:

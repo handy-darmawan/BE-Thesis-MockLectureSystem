@@ -45,7 +45,7 @@ const logout = async (request, response, next) => {
     await userService.logout(request);
 
     /* delete cookies */
-    response.clearCookie("refreshToken");
+    response.clearCookie("refreshToken", {secure: true, sameSite: "none", httpOnly: true});
 
     response.status(200).json({
       message: "Logout success",

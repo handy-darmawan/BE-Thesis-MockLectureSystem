@@ -1,4 +1,5 @@
 const db = require("../application/database");
+const { ResponseError } = require("../error/response-error");
 const TransactionHelper = require("../helper/transaction-helper");
 
 const getShifts = async () => {
@@ -20,7 +21,12 @@ const getTransactions = async (request) => {
   const page = parseInt(request.query.page) || 1;
   const limit = parseInt(request.query.limit) || 10;
   const offset = (page - 1) * limit;
-  const { start_date, end_date } = request.query;
+  const { start_date, end_date } = request.query || undefined;
+
+  if (!start_date || !end_date) {
+    throw new ResponseError(400, "All field can't be empty");
+  }
+
   let [bindings, placeholders] = await getTransacHelper(start_date, end_date);
 
   const rowResults = await db.raw(
@@ -44,47 +50,60 @@ const getTransactions = async (request) => {
 };
 
 const searchTransaction = async (request) => {
-  const date = request.date;
-  const shiftID = await getShiftID(request.shift);
-  const courseID = request.course_id;
-  const lecturerName = request.lecturer_name;
-  const classID = request.class_id;
+  try {
+    const date = request.date;
+    const shiftID = await getShiftID(request.shift);
+    const courseID = request.course_id;
+    const lecturerName = request.lecturer_name;
+    const classID = request.class_id;
 
-  let rawQuery =
-    TransactionHelper.rawQueryAllTransactions +
-    " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') = ? and mss.shift_id = ? and msc.course_id = ? and msl.lecturer_name = ? and tr.class_id = ?";
-  const transaction = await db.raw(rawQuery, [
-    date,
-    shiftID,
-    courseID,
-    lecturerName,
-    classID,
-  ]);
+    let rawQuery =
+      TransactionHelper.rawQueryAllTransactions +
+      " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') = ? and mss.shift_id = ? and msc.course_id = ? and msl.lecturer_name = ? and tr.class_id = ?";
+    const transaction = await db.raw(rawQuery, [
+      date,
+      shiftID,
+      courseID,
+      lecturerName,
+      classID,
+    ]);
 
-  return transaction.rows;
+    return transaction.rows;
+  } catch (error) {
+    throw new ResponseError(400, "All field can't be empty");
+  }
 };
 
 const updateLectureStatus = async (request) => {
-  const transactionID = request.transactionID;
+  try {
+    const transactionID = request.transactionID;
 
-  await db("tr_transaction").where({ transaction_id: transactionID }).update({
-    status_id: 2 /* set to present */,
-    transaction_update_date: new Date(),
-    update_user: "BOT",
-    update_date: new Date(),
-  });
+    await db("tr_transaction").where({ transaction_id: transactionID }).update({
+      status_id: 2 /* set to present */,
+      transaction_update_date: new Date(),
+      update_user: "BOT",
+      update_date: new Date(),
+    });
+  } catch (error) {
+    throw new ResponseError(400, "Choose transaction to update");
+  }
 };
 
 const exportTransactions = async (request) => {
-  const startDate = request.body.start_date;
-  const endDate = request.body.end_date;
-
-  const results = await db.raw(
-    TransactionHelper.rawQueryAllTransactions +
-      " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') between ? and ?",
-    [startDate, endDate]
-  );
-  return results.rows
+  try {
+    const startDate = request.body.start_date;
+    const endDate = request.body.end_date;
+  
+    const results = await db.raw(
+      TransactionHelper.rawQueryAllTransactions +
+        " where TO_CHAR(tr.transaction_date, 'YYYY-MM-DD') between ? and ?",
+      [startDate, endDate]
+    );
+    return results.rows;
+  } catch (error) {
+    throw new ResponseError(400, "All field can't be empty");
+  }
+ 
 };
 
 /* --- functionality --- */
@@ -194,5 +213,5 @@ module.exports = {
   getTransactions,
   searchTransaction,
   updateLectureStatus,
-  exportTransactions
+  exportTransactions,
 };
