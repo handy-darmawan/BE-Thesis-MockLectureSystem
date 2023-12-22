@@ -17,6 +17,7 @@ const login = async (request, response, next) => {
       },
       data: result.user,
     });
+    response.end();
   } catch (error) {
     next(error);
   }
@@ -32,6 +33,7 @@ const getToken = async (request, response, next) => {
         access_token: token
       },
     }); 
+    response.end();
 
   } catch (error) {
     next(error);
@@ -50,6 +52,7 @@ const logout = async (request, response, next) => {
     response.status(200).json({
       message: "Logout success",
     });
+    response.end();
   } catch (error) {
     next(error);
   }

@@ -7,6 +7,7 @@ const getShifts = async (request, response, next) => {
     response.status(200).json({
       data: shifts,
     });
+    response.end();
   } catch (error) {
     next(error);
   }
@@ -24,6 +25,7 @@ const getTransactions = async (request, response, next) => {
         total_item: results.totalRow,
       }
     });
+    response.end();
   } catch (error) {
     next(error);
   }
@@ -34,7 +36,7 @@ const exportCSV = async (request, response, next) => {
     const [workbook, sheet] = ExportHelper.generateSheet();
     const transactions = await transactionService.exportTransactions(request);
     if (transactions.length == 0) {
-      response.status(204).end();
+      response.status(204);
     } else {
       transactions.forEach((transaction) => {
         sheet.addRow(transaction);
@@ -54,6 +56,7 @@ const exportCSV = async (request, response, next) => {
       await workbook.csv.write(response, {
         formatterOptions: { delimiter: ";" },
       });
+      response.end();
     }
   } catch (error) {
     next(error);
@@ -65,7 +68,7 @@ const exportExcel = async (request, response, next) => {
     const [workbook, sheet] = ExportHelper.generateSheet();
     const transactions = await transactionService.exportTransactions(request);
     if (transactions.length == 0) {
-      response.status(204).end();
+      response.status(204);
     } else {
       transactions.forEach((transaction) => {
         sheet.addRow(transaction);
@@ -99,13 +102,14 @@ const searchTransaction = async (request, response, next) => {
     const transactions = await transactionService.searchTransaction(request.body);
     
     if (transactions.length === 0) {
-      response.status(204).end();
+      response.status(204);
     }
     else {
       response.status(200).json({
         data: transactions,
       });
     }
+    response.end();
   } catch (error) {
     next(error);
   }
@@ -117,6 +121,7 @@ const updateLectureStatus = async (request, response, next) => {
     response.status(200).json({
       message: "Lecture status updated",
     });
+    response.end();
   } catch (error) {
     next(error);
   }

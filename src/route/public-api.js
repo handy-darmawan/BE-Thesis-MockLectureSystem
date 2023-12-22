@@ -7,7 +7,7 @@ const publicRouter = new express.Router();
 /* User API */
 publicRouter.post("/api/user/login", userController.login);
 publicRouter.get("/api/user/token", userController.getToken);
-// publicRouter.use(authMiddleware);
+publicRouter.use(authMiddleware);
 publicRouter.delete("/api/user/logout", userController.logout);
 
 /* Transactions API */
